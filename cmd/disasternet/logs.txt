@@ -1,0 +1,7 @@
+
+Received message at 2026-08-29 18:03:00.335292 +0530 IST from Indrajeet: Priyanka, all mobile networks are down because of the cyclone. Can you see this message on our offline network? Are you safe?
+Received message at 2026-08-29 18:03:12.181839 +0530 IST from Priyanka: Yes Indrajeet, the offline app is working! I am stuck in the hostel. The ground floor is completely flooded with water.
+
+Received message at 2026-08-29 18:03:24.651546 +0530 IST from Indrajeet: Don't panic, stay on the first floor. I am sharing your local network location with the campus rescue team right now.
+Received message at 2026-08-29 18:03:35.089989 +0530 IST from Priyanka: Thank you! My phone battery is at 10%, but the P2P connection is stable. Let me know when they reach here.
+

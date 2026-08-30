@@ -1,4 +1,4 @@
-import { AlertTriangle, Send, Trash2, Check, X, ShieldAlert, RadioTower, Lock } from 'lucide-react'
+import { AlertTriangle, Send, Trash2, Check, X, ShieldAlert, RadioTower, Lock, Skull } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import NetworkGraph from './NetworkGraph'
 import AudioComponent from './Audio'
@@ -8,7 +8,6 @@ function App() {
   const [messages, setMessages] = useState<string[]>([])
   const [message, setMessage] = useState('')
   const [hiddenMessages, setHiddenMessages] = useState<string[]>([])
-
   const [confirmDeleteMsgIdx, setConfirmDeleteMsgIdx] = useState<number | null>(null)
 
   useEffect(()=>{
@@ -22,7 +21,6 @@ function App() {
 
   const sendMessage = async (isSOS = false) => {
     let finalMessage = message;
-
     if (isSOS) {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -40,7 +38,6 @@ function App() {
         return; 
       }
     }
-
     if (finalMessage.trim() === '') return
     await dispatchToBackend(finalMessage, isSOS);
   }
@@ -54,7 +51,6 @@ function App() {
     setMessage('')
   }
 
-  // FIX: Convert Local Blob Audio to Base64 String for Mesh Network Transfer
   const handleAudioRecord = async (audioUrl: string) => {
     if (audioUrl.startsWith('blob:')) {
       try {
@@ -64,11 +60,10 @@ function App() {
         reader.readAsDataURL(blob);
         reader.onloadend = async () => {
           const base64Audio = reader.result as string; 
-          // Result looks like "data:audio/webm;base64,GkXfow..."
           await dispatchToBackend(base64Audio, false);
         };
       } catch (error) {
-        console.error("Failed to convert audio for mesh transport:", error);
+        console.error("Failed to convert audio:", error);
       }
     } else {
       await dispatchToBackend(audioUrl, false);
@@ -82,11 +77,9 @@ function App() {
   
   return (
     <div className='min-h-screen w-full flex flex-col justify-center items-center bg-[#0a0a0a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))] py-6'>
-
-      {/* Glassmorphism Main Container */}
       <div className='flex flex-col h-[85vh] w-[95vw] lg:w-[75vw] xl:w-[65vw] bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl'>
 
-          {/* Tactical Header */}
+          {/* Header */}
           <div className='flex h-[12%] min-h-[70px] bg-red-900/80 border-b border-red-500/30 px-6 items-center justify-between'>
               <div className="flex items-center space-x-4">
                 <div className="relative">
@@ -104,7 +97,6 @@ function App() {
               </div>
           </div>
 
-          {/* Web of Trust & Network Telemetry Bar */}
           <div className="bg-black/60 border-b border-white/5 px-6 py-2.5 flex flex-col sm:flex-row justify-between items-center text-[10px] font-mono uppercase tracking-wider text-gray-400">
             <div className="flex space-x-6">
               <span className="flex items-center text-emerald-400"><RadioTower className="w-3.5 h-3.5 mr-1.5 animate-pulse"/> mDNS Discovery Active</span>
@@ -117,10 +109,9 @@ function App() {
             <NetworkGraph messages={messages} />
           </div>
 
-          {/* Connected Audio Component with Base64 Converter */}
           <AudioComponent onAudioRecorded={handleAudioRecord} />
 
-          {/* Terminal Style Chat Interface */}
+          {/* Chat Interface */}
           <div className='flex-1 bg-transparent px-6 py-4 overflow-y-auto flex flex-col space-y-5 scrollbar-thin scrollbar-thumb-white/10'>
             {Array.isArray(messages) ? (
               messages
@@ -128,11 +119,11 @@ function App() {
                 .map((msg, idx) => {
                   const isReceived = msg.startsWith("Received message");
                   const isConfirming = confirmDeleteMsgIdx === idx;
-                  const isUnverified = msg.includes("[UNVERIFIED]"); 
-                  const isSOS = msg.includes("[URGENT SOS]");
                   
-                  // Detect Base64 Audio Payload
+                  const isUnverified = msg.includes("UNVERIFIED") || msg.includes("SPOOF"); 
+                  const isSOS = msg.includes("[URGENT SOS]");
                   const isAudio = msg.includes("data:audio") || msg.includes("data:video");
+                  
                   let audioSrc = "";
                   let textPart = msg;
 
@@ -148,34 +139,61 @@ function App() {
                     if (match) { lat = parseFloat(match[1]); lng = parseFloat(match[2]); }
                   }
 
+                  // 🔥 TACTICAL SECURITY WARNING (ANTI-SPOOFING UI) 🔥
+                  if (isUnverified) {
+                    return (
+                      <div key={`msg-${idx}`} className="flex flex-col w-full items-center my-6 animate-pulse">
+                         <div className="w-full max-w-[90%] bg-red-950/80 border-2 border-red-600 rounded-lg shadow-[0_0_30px_rgba(220,38,38,0.6)] overflow-hidden backdrop-blur-md">
+                           <div className="bg-red-600 text-white font-black tracking-widest uppercase py-2 px-4 flex justify-between items-center text-xs">
+                              <span className="flex items-center"><Skull className="w-4 h-4 mr-2" /> CRITICAL ALERT: SECURITY COMPROMISED</span>
+                              <span>ERROR CODE: WOT-0x99</span>
+                           </div>
+                           <div className="p-4 flex flex-col items-center">
+                             <ShieldAlert className="text-red-500 w-12 h-12 mb-2" />
+                             <h2 className="text-red-400 font-bold text-lg mb-1 uppercase text-center">Identity Spoofing Detected</h2>
+                             <p className="text-red-300/80 text-xs font-mono text-center mb-4">Cryptographic signature verification failed. The sender's Ed25519 public key does not match the established Web of Trust records for this nickname.</p>
+                             <div className="w-full bg-black/70 border border-red-500/50 p-3 rounded text-left relative group">
+                                <span className="text-[10px] text-red-500 font-mono block mb-1 font-bold">INTERCEPTED ROGUE PAYLOAD:</span>
+                                <span className="text-gray-300 font-mono text-sm">{msg.replace(/\[UNVERIFIED.*\]/g, '').replace('Received message at ', '')}</span>
+                                {isConfirming ? (
+                                  <div className="absolute top-2 right-2 bg-black border border-red-500/50 px-2 py-1 rounded flex items-center space-x-2 z-10">
+                                    <button onClick={() => deleteMessage(msg)} className="text-red-400"><Check className="w-4 h-4" /></button>
+                                    <button onClick={() => setConfirmDeleteMsgIdx(null)} className="text-gray-500"><X className="w-4 h-4" /></button>
+                                  </div>
+                                ) : (
+                                  <button onClick={() => setConfirmDeleteMsgIdx(idx)} className="absolute top-2 right-2 text-red-500/40 hover:text-red-400">
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                )}
+                             </div>
+                           </div>
+                         </div>
+                      </div>
+                    )
+                  }
+
+                  // NORMAL RENDER
                   return (
                     <div key={`msg-${idx}`} className={`flex flex-col w-full ${isReceived ? 'items-start' : 'items-end'}`}>
-                      {isUnverified && (
-                        <div className="bg-red-950/80 text-red-400 text-[9px] font-mono font-bold px-3 py-1 rounded-t-md flex items-center border border-red-800/50 border-b-0 uppercase tracking-widest shadow-[0_0_10px_rgba(220,38,38,0.2)]">
-                          <ShieldAlert className="w-3 h-3 mr-1.5" /> Identity Spoofing Detected - Invalid Signature
-                        </div>
-                      )}
-
-                      <div className={`px-4 py-3 rounded-lg w-fit max-w-[85%] relative group flex flex-col items-start justify-between shadow-xl ${
+                      <div className={`px-4 py-3 rounded-lg w-fit max-w-[85%] relative group flex flex-col shadow-xl ${
                         isSOS ? "bg-red-600/90 text-white border border-red-400 shadow-[0_0_20px_rgba(220,38,38,0.4)] self-center w-full max-w-[95%] items-center" 
-                        : isUnverified ? "bg-red-950/40 border border-red-800 text-gray-300 rounded-tl-none backdrop-blur-md"
                         : isReceived ? "bg-white/5 text-gray-200 self-start border border-white/10 rounded-tl-sm backdrop-blur-md" 
                         : "bg-emerald-600/20 text-emerald-100 self-end border border-emerald-500/30 rounded-tr-sm backdrop-blur-md"
                       }`}>
-                        
                         <div className="w-full text-left">
-                          {!isReceived && !isSOS && <span className="text-[9px] text-emerald-400/70 block mb-1.5 font-mono uppercase tracking-wider">✓ Packet Encrypted & Signed</span>}
-                          {isReceived && !isUnverified && <span className="text-[9px] text-blue-400/70 block mb-1.5 font-mono uppercase tracking-wider">✓ Ed25519 Signature Verified</span>}
                           
-                          {/* Render Player if Audio, Render Text if Normal Message */}
+                          {/* WAPAS SE TICK (✓) LAGA DIYA HAI */}
+                          {!isReceived && !isSOS && <span className="text-[9px] text-emerald-400/70 block mb-1.5 font-mono uppercase tracking-wider">✓ Packet Encrypted & Signed</span>}
+                          {isReceived && <span className="text-[9px] text-blue-400/70 block mb-1.5 font-mono uppercase tracking-wider">✓ Ed25519 Signature Verified</span>}
+                          
                           {isAudio ? (
                             <div className="flex flex-col mt-1">
-                              {textPart && isReceived && <span className="text-[10px] mb-2 text-gray-400 uppercase tracking-wider">{textPart.replace('[UNVERIFIED]', '').replace('Received message at ', '')} transmitted voice data</span>}
+                              {textPart && isReceived && <span className="text-[10px] mb-2 text-gray-400 uppercase tracking-wider">{textPart.replace('Received message at ', '')} transmitted voice data</span>}
                               <audio controls src={audioSrc} className="h-8 w-48 sm:w-64 rounded outline-none" />
                             </div>
                           ) : (
                             <span className={`${isSOS ? 'text-lg font-bold uppercase tracking-wide' : 'text-sm font-light'}`}>
-                              {msg.replace('[UNVERIFIED]', '').split('| LAT:')[0]}
+                              {msg.split('| LAT:')[0]}
                             </span>
                           )}
                           
@@ -188,15 +206,13 @@ function App() {
                             </div>
                           )}
                         </div>
-
-                        {/* DELETE ACTIONS */}
                         {isConfirming ? (
-                          <div className="absolute -top-3 right-0 bg-black border border-red-500/50 px-2 py-1 rounded shadow-xl flex items-center space-x-2 z-10">
-                            <button onClick={() => deleteMessage(msg)} className="text-red-400 hover:text-red-300"><Check className="w-4 h-4" /></button>
-                            <button onClick={() => setConfirmDeleteMsgIdx(null)} className="text-gray-500 hover:text-white"><X className="w-4 h-4" /></button>
+                          <div className="absolute -top-3 right-0 bg-black border border-red-500/50 px-2 py-1 rounded flex items-center space-x-2 z-10">
+                            <button onClick={() => deleteMessage(msg)} className="text-red-400"><Check className="w-4 h-4" /></button>
+                            <button onClick={() => setConfirmDeleteMsgIdx(null)} className="text-gray-500"><X className="w-4 h-4" /></button>
                           </div>
                         ) : (
-                          <button onClick={() => setConfirmDeleteMsgIdx(idx)} className="absolute -top-2 -right-2 bg-black text-white/40 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-400 border border-white/10">
+                          <button onClick={() => setConfirmDeleteMsgIdx(idx)} className="absolute -top-2 -right-2 bg-black text-white/40 p-1.5 rounded-full opacity-0 group-hover:opacity-100 hover:text-red-400 border border-white/10">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         )}
@@ -207,7 +223,6 @@ function App() {
             ) : null}
           </div>
 
-          {/* Tactical Input Bar */}
           <div className='h-[12%] min-h-[70px] bg-black/60 flex items-center px-6 border-t border-white/5'>
             <input 
               type='text' 
@@ -225,8 +240,6 @@ function App() {
             </button>
           </div>
       </div>
-
-      {/* MILITARY GRADE FOOTER */}
       <div className="mt-6 flex flex-col items-center px-8 py-2">
         <p className="text-gray-500 font-mono text-xs tracking-widest uppercase">
           System Engineered By <span className="text-gray-300 font-bold ml-1">Indrajeet & Priyanka</span>
@@ -235,9 +248,7 @@ function App() {
           Zero-Internet Decentralized Emergency Mesh Network
         </p>
       </div>
-
     </div>
   )
 }
-
 export default App

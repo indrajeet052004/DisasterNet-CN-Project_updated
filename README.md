@@ -4,7 +4,7 @@ An enterprise-grade, offline-first peer-to-peer (P2P) communication and tactical
 
 ---
 
-## 🚀 Key Features & Upgrades (DisasterNet 2.0)
+## 🚀 Key Features & Upgrades (DisasterNet)
 
 - **Zero Internet Dependency:** Operates entirely over local Area Networks (WLAN/LAN) and direct radio/P2P topologies without requiring an active internet gateway or central server.
 - **Decentralized Multi-Hop Mesh Routing:** Built on top of **libp2p**, **GossipSub**, and **Kademlia DHT**, enabling autonomous node-to-node communication without any Single Point of Failure (SPOF).
